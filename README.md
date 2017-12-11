@@ -1,9 +1,9 @@
-`ewp-rsa-aes128cbc` Encryption
+`ewp-rsa-aes128gcm` Encryption
 ==============================
 
 This document describes a format which can be used to transfer encrypted binary
-payload to a single recipient, with help a symmetric AES-128 key and the
-recipient's public RSA key.
+payload to a single recipient, with help a symmetric AES-128 GCM encryption and
+the recipient's public RSA key.
 
 * [What is the status of this document?][statuses]
 * [See the index of all other EWP Specifications][develhub]
@@ -21,7 +21,9 @@ Here's a quick summary of this thread:
 
  * **We didn't** need to authenticate the sender, nor to verify the integrity
    of the data being sent (because EWP Network already made use of some
-   different techniques for achieving these tasks).
+   different techniques for achieving these tasks). Still, we preferred GCM
+   over CBC, for security reasons (see
+   [here](https://github.com/erasmus-without-paper/ewp-specs-sec-rsa-aes128cbc/issues/1)).
 
  * We didn't find any existing standards which would satisfy these requirements
    and - at the same time - would fit neatly with our architecture and be
@@ -71,26 +73,27 @@ Encryption
    ```
 
  * In order to allow the `aesKey` to be safely reused, the sender also
-   generates a random salt (initialization vector) `iv` for every message.
-   AES-128 requires 16-byte-long initialization vector.
+   generates a random 12-byte-long salt (initialization vector) `iv` for every
+   message.
 
    Java example:
 
    ```java
    SecureRandom rnd = new SecureRandom();
-   byte[] iv = new byte[16];
+   byte[] iv = new byte[12];
    rnd.nextBytes(iv);
    ```
 
- * Payload `payload` is then encrypted with `aesKey` and `iv`, resulting in
-   `encryptedPayload`.
+ * Payload `payload` is then encrypted with AES GCM mode with `aesKey` and
+   `iv`, resulting in `encryptedPayload` (which also already contains the GCM
+   Authentication Tag).
 
    Java example:
 
    ```java
-   Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-   IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-   cipher.init(Cipher.ENCRYPT_MODE, aesKey, ivParameterSpec);
+   Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+   GCMParameterSpec spec = new GCMParameterSpec(12 * 8, iv);
+   cipher.init(Cipher.ENCRYPT_MODE, aesKey, spec);
    encryptedPayload = cipher.doFinal(originalContent);
    ```
 
@@ -118,7 +121,7 @@ Encryption
    The value of `encryptedAesKey`, as described in the *Encryption* section
    above.
 
- * `iv` (16 bytes)
+ * `iv` (12 bytes)
 
    The value of the initialization vector `iv`, as described in the
    *Encryption* section above. Note, that it doesn't need to be encrypted.
@@ -148,7 +151,7 @@ Test values
 
 ### Recipient's credentials
 
-We will use following RSA key-pair for this example:
+We will use the following RSA key-pair in this example:
 
 ```
 // recipientPublicKey
@@ -193,12 +196,12 @@ binary. Here, it is presented in base64-encoded format, for presentation
 reasons.
 
 ```
-A1ATd09ZbhiHNEvaigZGIDB1lZI1XbP1HISY/9Cxit0BAHAwvLBFwG6YTgHbIA/dKOnnY81GEqxf
-EGH8fcvsXqpFQAUxRcEB9OTsO/lKHBlnBLt9zR/C65J6k+Cd8N8QUBb+sDMaXxsszvFGQ1dLjSxE
-O5edZ8b6PX+aLUdOhLTbM3RsOi01NCmeU8QqyJbEK1j627dB9bDUVrsEaghq/IwA/uMx3Kjs0skb
-HfgmR0cMmdCG2dHokD80H5pt1amwXD7yMPRnEtY/esfryj1iDhBqL6y2XT0EykfGsjUMhyUgnTVU
-6bm2fsHTxxrSZjBkQ8padn/LuwkGuq/vsGnvNKkl6Bk0yYHO7KDjikL1nIEi2MbyWjX+6ELCF4K4
-lo+eReqBF8ll49q0y6gZ/fmWw+862ChihE/23BTu/kLbaZFgGsXZAc/FdOciiazrybFqvqw=
+A1ATd09ZbhiHNEvaigZGIDB1lZI1XbP1HISY/9Cxit0BAFEd8dtFveIlZxgNb7Wl/hYWwMJ55jUp
+yyvFUNMoxGQF5fWPX8zWlltIB1xD/yuVwK2Whk6Nz1j5qqJ9FSWJPqdTx3438R0vk7Skh2Zo1s5U
+FJX/IdgcwEY3s/CQuHN1BUOWDCeweZowCA6Npvhx8hnQOWcr8x/FCagjDDrmSAknz5RZiyVW2xw4
+SyI/w3RXgEbo402faq/eMwcj4yIc2gm1KJa8qM3gznLMUP2qYzjhcrRTumVx6laiRYvS315MGMUP
+tsqiV3ofqRHI4u3ugWLYhKZesO5YnFaRVvS+05d4lqUYCxUzJT2QD2NIGeeeG6a8lNoaG41TRd1s
+FgfzeNS3z8jfltABwbpileS0ixTlHY5OjGNSojZX+8XI0C4CsCQVUrhMsjROTlWjnI0=
 ```
 
 
@@ -216,23 +219,23 @@ A1ATd09ZbhiHNEvaigZGIDB1lZI1XbP1HISY/9Cxit0=
 256
 
 // encryptedAesKey (base64)
-cDC8sEXAbphOAdsgD90o6edjzUYSrF8QYfx9y+xeqkVABTFFwQH05Ow7+UocGWcEu33NH8LrknqT
-4J3w3xBQFv6wMxpfGyzO8UZDV0uNLEQ7l51nxvo9f5otR06EtNszdGw6LTU0KZ5TxCrIlsQrWPrb
-t0H1sNRWuwRqCGr8jAD+4zHcqOzSyRsd+CZHRwyZ0IbZ0eiQPzQfmm3VqbBcPvIw9GcS1j96x+vK
-PWIOEGovrLZdPQTKR8ayNQyHJSCdNVTpubZ+wdPHGtJmMGRDylp2f8u7CQa6r++wae80qSXoGTTJ
-gc7soOOKQvWcgSLYxvJaNf7oQsIXgriWj55F6g==
+UR3x20W94iVnGA1vtaX+FhbAwnnmNSnLK8VQ0yjEZAXl9Y9fzNaWW0gHXEP/K5XArZaGTo3PWPmq
+on0VJYk+p1PHfjfxHS+TtKSHZmjWzlQUlf8h2BzARjez8JC4c3UFQ5YMJ7B5mjAIDo2m+HHyGdA5
+ZyvzH8UJqCMMOuZICSfPlFmLJVbbHDhLIj/DdFeARujjTZ9qr94zByPjIhzaCbUolryozeDOcsxQ
+/apjOOFytFO6ZXHqVqJFi9LfXkwYxQ+2yqJXeh+pEcji7e6BYtiEpl6w7licVpFW9L7Tl3iWpRgL
+FTMlPZAPY0gZ554bpryU2hobjVNF3WwWB/N41A==
 
-// decrypted aesKey (base64)
-75rXSczDfUCrt8RMoED4+Q==
+// aesKey (base64)
+Gwaty5wYxuD81f++z6jwZw==
 
 // iv (base64)
-gRfJZePatMuoGf35lsPvOg==
+t8/I35bQAcG6YpXk
 
 // offset of encryptedPayload
-306
+302
 
 // encryptedPayload (base64)
-2ChihE/23BTu/kLbaZFgGsXZAc/FdOciiazrybFqvqw=
+tIsU5R2OToxjUqI2V/vFyNAuArAkFVK4TLI0Tk5Vo5yN
 
 // length of decryptedPayload
 17
