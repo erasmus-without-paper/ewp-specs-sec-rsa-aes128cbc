@@ -51,51 +51,18 @@ Encryption
    recipients. In case of any doubt, it's safer to generate a new one every
    time.
 
-   Java example:
-
-   ```java
-   KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-   keyGen.init(128);
-   SecretKey aesKey = keyGen.generateKey();
-   ```
-
  * In order to safely transfer the `aesKey` to the recipient, it is encrypted
    with `recipientPublicKey`, resulting in `encryptedAesKey`. ECB mode and
    PKCS#1 v1.5 padding are used. The sender MAY cache the resulting
    `encryptedAesKey` (per recipient, as with `aesKey`).
 
-   Java example:
-
-   ```java
-   Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-   cipher.init(Cipher.ENCRYPT_MODE, recipientPublicKey);
-   byte[] encryptedAesKey = cipher.doFinal(aesKey.getEncoded());
-   ```
-
  * In order to allow the `aesKey` to be safely reused, the sender also
    generates a random 12-byte-long salt (initialization vector) `iv` for every
    message.
 
-   Java example:
-
-   ```java
-   SecureRandom rnd = new SecureRandom();
-   byte[] iv = new byte[12];
-   rnd.nextBytes(iv);
-   ```
-
  * Payload `payload` is then encrypted with AES GCM mode with `aesKey` and
    `iv`, resulting in `encryptedPayload` (which also already contains the GCM
    Authentication Tag).
-
-   Java example:
-
-   ```java
-   Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-   GCMParameterSpec spec = new GCMParameterSpec(12 * 8, iv);
-   cipher.init(Cipher.ENCRYPT_MODE, aesKey, spec);
-   encryptedPayload = cipher.doFinal(originalContent);
-   ```
 
  * The final `ewpRsaAesBody` is then constructed, in the format described in
    the section below.
