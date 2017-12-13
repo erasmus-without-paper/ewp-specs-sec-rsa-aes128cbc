@@ -5,6 +5,15 @@ This document describes all the changes made to the *`ewp-rsa-aes128gcm`
 Encryption* document, starting from its first released version.
 
 
+1.0.0
+-----
+
+* Switched to a stable branch.
+
+* Removed Java examples. We don't want specifications to be language-specific.
+  We will publish a reference Java implementation in a separate repository.
+
+
 0.2.0
 -----
 
