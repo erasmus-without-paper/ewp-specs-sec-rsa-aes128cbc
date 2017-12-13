@@ -2,8 +2,8 @@
 ==============================
 
 This document describes a format which can be used to transfer encrypted binary
-payload to a single recipient, with help a symmetric AES-128 GCM encryption and
-the recipient's public RSA key.
+payload to a single recipient, with help of symmetric AES-128 GCM encryption
+and the recipient's public RSA key.
 
 * [What is the status of this document?][statuses]
 * [See the index of all other EWP Specifications][develhub]
