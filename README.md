@@ -16,8 +16,9 @@ This specification is the result of the discussion in
 [this GitHub thread](https://github.com/erasmus-without-paper/ewp-specs-architecture/issues/26).
 Here's a quick summary of this thread:
 
- * We needed a simple way to encrypt data for a **single recipient**, given his
-   RSA public key.
+ * We wanted our encryption scheme to fit neatly with our current architecture.
+   In particular, we needed a simplest way to encrypt data for a **single
+   recipient**, given his RSA public key.
 
  * **We didn't** need to authenticate the sender, nor to verify the integrity
    of the data being sent (because EWP Network already made use of some
@@ -25,11 +26,12 @@ Here's a quick summary of this thread:
    over CBC, for security reasons (see
    [here](https://github.com/erasmus-without-paper/ewp-specs-sec-rsa-aes128cbc/issues/1)).
 
- * We didn't find any existing standards which would satisfy these requirements
-   and - at the same time - would fit neatly with our architecture and be
-   easily implementable in the software stacks used by EWP partners. We didn't
-   have much time to investigate and browse through all the existing standards,
-   so we decided to prepare our own.
+ * To ease adoption, we wanted the solution to be easily implementable in the
+   software stacks used by EWP partners.
+
+ * At the time, we didn't find any existing standards which would satisfy the\
+   above requirements. We didn't have much time to investigate and browse
+   through all the existing standards, so we decided to prepare our own.
 
 To summarize: It's not an RFC standard, but it's simple, and it works. EWP
 Network makes use of this format in some of its specifications regarding HTTP
@@ -107,7 +109,10 @@ Decryption
    this step and assume that the message is encrypted for this particular key.)
 
  * Read `encryptedAesKeyLength`, and then `encryptedAesKey`. Decrypt
-   `encryptedAesKey` your private RSA key, and retrieve `aesKey`.
+   `encryptedAesKey` with your private RSA key, and retrieve `aesKey`. You MAY
+   keep a cached map of `encryptedAesKey->aesKey` to speed up this step a
+   little (this is useful only if the sender also caches and reuses his
+   `encryptedAesKey`).
 
  * Read `iv` and `encryptedPayload`. Use `aesKey` and `iv` to decrypt
    `encryptedPayload` and retrieve the original `payload`.
