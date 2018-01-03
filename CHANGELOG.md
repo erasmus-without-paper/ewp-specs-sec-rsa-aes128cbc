@@ -5,6 +5,13 @@ This document describes all the changes made to the *`ewp-rsa-aes128gcm`
 Encryption* document, starting from its first released version.
 
 
+1.0.1
+-----
+
+* Minor style and readability fixes in `README.md`. Added an extra hint about
+  using cache to speed up decryption a bit.
+
+
 1.0.0
 -----
 
