@@ -29,7 +29,7 @@ Here's a quick summary of this thread:
  * To ease adoption, we wanted the solution to be easily implementable in the
    software stacks used by EWP partners.
 
- * At the time, we didn't find any existing standards which would satisfy the\
+ * At the time, we didn't find any existing standards which would satisfy the
    above requirements. We didn't have much time to investigate and browse
    through all the existing standards, so we decided to prepare our own.
 
